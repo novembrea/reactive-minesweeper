@@ -57,6 +57,8 @@ class Board {
       NW: (x, y) => [x - 1, y - 1],
     };
 
+    this.reveal = this.reveal;
+
     this.seed();
     this.shuffle();
     this.toMatrix();
@@ -70,7 +72,7 @@ class Board {
    * @memberof Board
    */
   seed() {
-    const bombs = (this.width * this.height) / 10;
+    const bombs = (this.width * this.height) / 5;
     this.board = Array(this.width * this.height)
       .fill()
       .map((x, i) => new Tile(i < bombs));
@@ -118,29 +120,66 @@ class Board {
     }, [[]]);
   }
 
+  mark() {
+    this.board = this.board.map((row, x) => row.map((sq, y) => {
+      /* eslint-disable no-param-reassign */
+      sq.bombsNearby = sq.isBomb ? -1 : this.bombsNearby(x, y);
+      /* eslint-enable no-param-reassign */
+      return sq;
+    }));
+  }
+
+
+  bombsNearby(x, y) {
+    let n = 0;
+    Object
+      .keys(this.directions)
+      .forEach(k => {
+        n += this.tileStep(...this.directions[k](x, y));
+      });
+    return n;
+  }
+
   tileStep(x, y) {
     const tb = this.board;
     if (!tb[x] || !tb[y] || !tb[x][y]) return 0;
     return Number(tb[x][y].isBomb);
   }
 
-  mark() {
-    const bombsNearby = (x, y) => {
-      let n = 0;
-      Object
-        .keys(this.directions)
-        .forEach(k => {
-          n += this.tileStep(...this.directions[k](x, y));
+  reveal(x, y) {
+    const tb = this.board;
+    const toVisit = new Map([[String([x, y]), true]]);
+    const visited = new Map();
+    const step = (xx, yy) => {
+      if (!tb[xx] || !tb[yy] || !tb[xx][yy]) return;
+      const t = tb[xx][yy];
+      if (t.bombsNearby === 0 && !toVisit.has(String([xx, yy]))) {
+        toVisit.set(String([xx, yy]), true);
+      }
+      if (!t.isBomb) t.isDefused = true;
+    };
+    const walk = () => {
+      const it = toVisit.keys();
+      let run = true;
+      while (run) {
+        const { value, done } = it.next();
+        if (done) {
+          run = false;
+          return;
+        }
+        Object.values(this.directions).forEach(direction => {
+          if (!visited.has(value)) {
+            const [a, b] = value.split(',');
+            step(...direction(Number(a), Number(b)));
+          }
         });
-      return n;
+        toVisit.delete(value);
+        visited.set(value, true);
+        if (toVisit.size > 0) walk();
+      }
     };
 
-    this.board = this.board.map((row, x) => row.map((sq, y) => {
-      /* eslint-disable no-param-reassign */
-      sq.bombsNearby = sq.isBomb ? -1 : bombsNearby(x, y);
-      /* eslint-enable no-param-reassign */
-      return sq;
-    }));
+    walk();
   }
 }
 

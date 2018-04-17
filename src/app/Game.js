@@ -6,25 +6,26 @@ class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      board: new Board(6, 6).board,
+      game: new Board(6, 6),
     };
   }
 
   handleLeftClick = (x, y) => event => {
-    const board = this.state.board.slice();
-    board[x][y].isDefused = true;
-    this.setState({ board });
+    const game = Object.assign({}, this.state.game);
+    console.log(game);
+    game.reveal(x, y);
+    this.setState({ game });
   }
 
   handleRightClick = (x, y) => event => {
     event.preventDefault();
-    const board = this.state.board.slice();
+    const board = this.state.game.slice();
     board[x][y].flipFlag();
     this.setState({ board });
   }
 
   render() {
-    const { board } = this.state;
+    const { game: { board } } = this.state;
     let k = 0;
     return (
       <Fragment>

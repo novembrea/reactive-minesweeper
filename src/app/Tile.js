@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import cn from 'classnames';
 
-import flag from 'images/flag.png';
+import flag from '../images/flag.png';
 
 import css from './Tile.scss';
 
