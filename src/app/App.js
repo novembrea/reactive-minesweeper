@@ -4,6 +4,8 @@ import Helmet from 'react-helmet';
 /* eslint-disable import/no-extraneous-dependencies */
 import { hot } from 'react-hot-loader';
 
+import Field from './Field';
+
 const App = () => (
   <Fragment>
     <Helmet>
@@ -15,6 +17,7 @@ const App = () => (
       />
     </Helmet>
     Kaboom!
+    <Field />
   </Fragment>
 );
 
