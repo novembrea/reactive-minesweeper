@@ -1,51 +1,35 @@
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import Tile from './Tile';
 
-class Tile {
-  /**
-   * Creates an instance of Tile.
-   * @param {boolean} isBomb is tile a bomb
-   * @memberof Tile
-   */
-  constructor(isBomb) {
-    this.x = 0;
-    this.y = 0;
-    this.bombsNearby = 0;
-    this.isBomb = isBomb;
-    this.isFlagged = false;
-    this.isDefused = false;
-  }
-
-  flipFlag() {
-    this.isFlagged = !this.isFlagged;
-  }
-
-  set xCoord(x) {
-    this.x = x;
-  }
-
-  set yCoord(y) {
-    this.y = y;
-  }
-
-  set bombs(bombsNearby) {
-    this.bombsNearby = bombsNearby;
-  }
-
-  set defuse(isDefused) {
-    this.isDefused = isDefused;
-  }
+function maketile(isBomb) {
+  return {
+    x: 0,
+    y: 0,
+    bombsNearby: 0,
+    isBomb,
+    isFlagged: false,
+    isDefused: false,
+  };
 }
 
-class Board {
+class Board extends Component {
   /**
    * Creates an instance of Board.
    * @param {number} height height
    * @param {number} width width
    * @memberof Board
    */
-  constructor(height, width) {
+  constructor(props) {
+    super(props);
+    const { height, width } = props;
+
+    this.state = {
+      board: [],
+    };
+
     this.height = height;
     this.width = width;
-    this.board = [];
     this.directions = {
       N: (x, y) => [x, y - 1],
       NE: (x, y) => [x + 1, y - 1],
@@ -57,9 +41,7 @@ class Board {
       NW: (x, y) => [x - 1, y - 1],
     };
 
-    this.reveal = this.reveal;
-
-    this.seed();
+    this.init();
     this.shuffle();
     this.toMatrix();
     this.mark();
@@ -68,60 +50,59 @@ class Board {
   /**
    * Constructs the board as a flat array,
    * assigning bombs on the first n indices.
-   *
-   * @memberof Board
    */
-  seed() {
-    const bombs = (this.width * this.height) / 5;
-    this.board = Array(this.width * this.height)
+  init = () => {
+    const bombs = (this.width * this.height) / 10;
+    this.state.board = Array(this.width * this.height)
       .fill()
-      .map((x, i) => new Tile(i < bombs));
+      .map((x, i) => maketile(i < bombs));
   }
 
   /**
    * Fisher–Yates shuffle distributes
    * bombs randomly around the board.
-   *
-   * @memberof Board
    */
-  shuffle() {
-    let curr = this.board.length;
+  shuffle = () => {
+    const { board } = this.state;
+    let curr = board.length;
     let rand = 0;
     let temp = null;
     while (curr !== 0) {
       rand = Math.floor(Math.random() * curr);
       curr -= 1;
-      temp = this.board[curr];
-      this.board[curr] = this.board[rand];
-      this.board[rand] = temp;
+      temp = board[curr];
+      board[curr] = board[rand];
+      board[rand] = temp;
     }
   }
 
   /**
-   * Converts flat board array into a matrix.
-   *
-   * @memberof Board
+   * Reduces flat board array into a matrix.
    */
-  toMatrix() {
-    let x = 0;
+  toMatrix = () => {
     let y = 0;
-    this.board = this.board.reduce((acc, tile, i) => {
-      if (i > 0 && i % (this.height) === 0) {
-        x++;
-        y = 0;
-      }
+    let x = 0;
+    let c = 0;
+    this.state.board = this.state.board.reduce((acc, tile, i) => {
+      c++;
       /* eslint-disable no-param-reassign */
-      tile.xCoord = x;
-      tile.yCoord = y++;
+      tile.x = x++;
+      tile.y = y;
       /* eslint-enable no-param-reassign */
-      if (i % (this.board.length / this.width) === 0 && i !== 0) acc.push([]);
+
       acc[acc.length - 1].push(tile);
+      if (c === this.width) {
+        c = 0;
+        x = 0;
+        y++;
+        if (i + 1 < this.state.board.length) acc.push([]);
+      }
       return acc;
     }, [[]]);
   }
 
-  mark() {
-    this.board = this.board.map((row, x) => row.map((sq, y) => {
+  mark = () => {
+    this.state.board = this.state.board.map((row, x) => row.map((sq, y) => {
       /* eslint-disable no-param-reassign */
       sq.bombsNearby = sq.isBomb ? -1 : this.bombsNearby(x, y);
       /* eslint-enable no-param-reassign */
@@ -129,8 +110,7 @@ class Board {
     }));
   }
 
-
-  bombsNearby(x, y) {
+  bombsNearby = (x, y) => {
     let n = 0;
     Object
       .keys(this.directions)
@@ -140,47 +120,108 @@ class Board {
     return n;
   }
 
-  tileStep(x, y) {
-    const tb = this.board;
-    if (!tb[x] || !tb[y] || !tb[x][y]) return 0;
-    return Number(tb[x][y].isBomb);
+  tileStep = (x, y) => {
+    const { board } = this.state;
+    if (!board[x] || !board[x][y]) return 0;
+    return Number(board[x][y].isBomb);
   }
 
-  reveal(x, y) {
-    const tb = this.board;
-    const toVisit = new Map([[String([x, y]), true]]);
+  reveal(tile) {
+    const board = this.state.board.slice(0);
+    const toVisit = new Map([[[tile.x, tile.y].toString(), true]]);
     const visited = new Map();
-    const step = (xx, yy) => {
-      if (!tb[xx] || !tb[yy] || !tb[xx][yy]) return;
-      const t = tb[xx][yy];
-      if (t.bombsNearby === 0 && !toVisit.has(String([xx, yy]))) {
-        toVisit.set(String([xx, yy]), true);
+
+    const step = (x, y) => {
+      if (!board[y] || !board[y][x]) return;
+      const t = board[y][x];
+      if (t.bombsNearby === 0 && !toVisit.has([x, y].toString())) {
+        toVisit.set([x, y].toString(), true);
       }
       if (!t.isBomb) t.isDefused = true;
     };
+
     const walk = () => {
       const it = toVisit.keys();
-      let run = true;
-      while (run) {
-        const { value, done } = it.next();
-        if (done) {
-          run = false;
-          return;
-        }
-        Object.values(this.directions).forEach(direction => {
-          if (!visited.has(value)) {
-            const [a, b] = value.split(',');
-            step(...direction(Number(a), Number(b)));
-          }
-        });
-        toVisit.delete(value);
-        visited.set(value, true);
-        if (toVisit.size > 0) walk();
+      const { value, done } = it.next();
+      if (done) {
+        this.setState({ board });
+        return;
       }
+      Object.keys(this.directions).forEach(k => {
+        if (!visited.has(value)) {
+          const [x, y] = value.split(',');
+          step(...this.directions[k](Number(x), Number(y)));
+        }
+      });
+      toVisit.delete(value);
+      visited.set(value, true);
+      walk();
     };
+    return walk();
+  }
 
-    walk();
+  revealBombs() {
+    this.setState({
+      board: this.state.board.map(row => row.map(tile => {
+        if (tile.isBomb) {
+          tile.isDefused = true; // eslint-disable-line no-param-reassign
+        }
+        return tile;
+      })),
+    });
+  }
+
+
+  handleLeftClick = (x, y) => () => {
+    const board = this.state.board.slice(0);
+    const tile = board[y][x];
+    tile.isDefused = true;
+
+    if (tile.isBomb) {
+      this.props.gameOver();
+      this.revealBombs();
+    }
+    if (tile.bombsNearby > 0) {
+      return this.setState({ board });
+    }
+
+    return this.reveal(tile);
+  }
+
+  handleRightClick = (x, y) => event => {
+    event.preventDefault();
+  }
+
+
+  render = () => {
+    const { board } = this.state;
+    let k = 0;
+    let j = 0;
+    return (
+      <table>
+        <tbody>
+          {board.map(row => (
+            <tr key={k++}>
+              {row.map(tile => (
+                <Tile
+                  handleRightClick={this.handleRightClick}
+                  handleLeftClick={this.handleLeftClick}
+                  key={k + j++}
+                  {...tile}
+                />
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
   }
 }
+
+Board.propTypes = {
+  height: PropTypes.number.isRequired,
+  width: PropTypes.number.isRequired,
+  gameOver: PropTypes.func.isRequired,
+};
 
 export default Board;

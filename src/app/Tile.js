@@ -1,32 +1,33 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import cn from 'classnames';
+import onlyUpdateForKeys from 'recompose/onlyUpdateForKeys';
 
 import flag from '../images/flag.png';
+import mine from '../images/mine.png';
 
 import css from './Tile.scss';
 
 const Tile = ({
   handleLeftClick,
   handleRightClick,
-  tile,
+  x,
+  y,
+  bombsNearby,
+  isBomb,
+  isFlagged,
+  isDefused,
 }) => {
-  const {
-    x,
-    y,
-    bombsNearby,
-    isBomb,
-    isFlagged,
-    isDefused,
-  } = tile;
   const btnClasses = cn({
     [css.button]: true,
-    [css.isBomb]: isBomb,
   });
   const text = () => {
     if (isFlagged) return <img className={css.flag} src={flag} alt='flagged' />;
-    if (isDefused) return bombsNearby;
+    if (isDefused && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
+    if (isDefused) return bombsNearby || '';
+    if (isDefused && bombsNearby > 0) return <b>{bombsNearby}</b>;
     return '???';
+    // return `${x} ${y}`;
   };
   return (
     <td>
@@ -44,15 +45,13 @@ const Tile = ({
 Tile.propTypes = {
   handleRightClick: PropTypes.func.isRequired,
   handleLeftClick: PropTypes.func.isRequired,
-  tile: PropTypes.shape({
-    x: PropTypes.number,
-    y: PropTypes.number,
-    bombsNearby: PropTypes.number,
-    isBomb: PropTypes.bool,
-    isFlagged: PropTypes.bool,
-    isDefused: PropTypes.bool,
-  }).isRequired,
+  x: PropTypes.number.isRequired,
+  y: PropTypes.number.isRequired,
+  bombsNearby: PropTypes.number.isRequired,
+  isBomb: PropTypes.bool.isRequired,
+  isFlagged: PropTypes.bool.isRequired,
+  isDefused: PropTypes.bool.isRequired,
 };
 
 
-export default Tile;
+export default onlyUpdateForKeys(['isFlagged', 'isDefused'])(Tile);
