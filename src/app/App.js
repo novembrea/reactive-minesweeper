@@ -4,7 +4,7 @@ import Helmet from 'react-helmet';
 /* eslint-disable import/no-extraneous-dependencies */
 import { hot } from 'react-hot-loader';
 
-import Field from './Field';
+import Game from './Game';
 
 const App = () => (
   <Fragment>
@@ -16,8 +16,7 @@ const App = () => (
         content='Minesweeper game in React'
       />
     </Helmet>
-    Kaboom!
-    <Field />
+    <Game />
   </Fragment>
 );
 

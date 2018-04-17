@@ -11,6 +11,11 @@ class Tile {
     this.bombsNearby = 0;
     this.isBomb = isBomb;
     this.isFlagged = false;
+    this.isDefused = false;
+  }
+
+  flipFlag() {
+    this.isFlagged = !this.isFlagged;
   }
 
   set xCoord(x) {
@@ -21,25 +26,25 @@ class Tile {
     this.y = y;
   }
 
-  set flag(flagged) {
-    this.isFlagged = flagged;
-  }
-
   set bombs(bombsNearby) {
     this.bombsNearby = bombsNearby;
+  }
+
+  set defuse(isDefused) {
+    this.isDefused = isDefused;
   }
 }
 
 class Board {
   /**
    * Creates an instance of Board.
-   * @param {number} w width
-   * @param {number} h height
+   * @param {number} height height
+   * @param {number} width width
    * @memberof Board
    */
-  constructor(w, h) {
-    this.w = w;
-    this.h = h;
+  constructor(height, width) {
+    this.height = height;
+    this.width = width;
     this.board = [];
     this.directions = {
       N: (x, y) => [x, y - 1],
@@ -65,8 +70,8 @@ class Board {
    * @memberof Board
    */
   seed() {
-    const bombs = (this.w * this.h) / 10;
-    this.board = Array(this.w * this.h)
+    const bombs = (this.width * this.height) / 10;
+    this.board = Array(this.width * this.height)
       .fill()
       .map((x, i) => new Tile(i < bombs));
   }
@@ -99,7 +104,7 @@ class Board {
     let x = 0;
     let y = 0;
     this.board = this.board.reduce((acc, tile, i) => {
-      if (i > 0 && i % (this.w) === 0) {
+      if (i > 0 && i % (this.height) === 0) {
         x++;
         y = 0;
       }
@@ -107,7 +112,7 @@ class Board {
       tile.xCoord = x;
       tile.yCoord = y++;
       /* eslint-enable no-param-reassign */
-      if (i % (this.board.length / this.w) === 0 && i !== 0) acc.push([]);
+      if (i % (this.board.length / this.width) === 0 && i !== 0) acc.push([]);
       acc[acc.length - 1].push(tile);
       return acc;
     }, [[]]);

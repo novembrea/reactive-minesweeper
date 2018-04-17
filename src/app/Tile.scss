@@ -1,0 +1,18 @@
+:local .button {
+  height: 100%;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+:local .flag {
+  max-width: 80%;
+}
+
+:local .isBomb {
+  // border: 2px tomato solid;
+  background: tomato;
+  color: white;
+}
+
