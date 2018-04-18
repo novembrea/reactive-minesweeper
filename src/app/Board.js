@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Tile from './Tile';
 
+
+import css from './Board.scss';
+
 function maketile(isBomb) {
   return {
     x: 0,
@@ -48,6 +51,16 @@ class Board extends Component {
     this.toMatrix();
     this.assignMarkers();
   }
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.isGameOver && !nextProps.isGameOver) {
+      this.init();
+      this.shuffle();
+      this.toMatrix();
+      this.assignMarkers();
+    }
+  }
+
 
   /**
    * Constructs the board as a flat array and
@@ -198,16 +211,19 @@ class Board extends Component {
     });
   }
 
-
   handleLeftClick = (x, y) => () => {
     const board = this.state.board.slice(0);
     const tile = board[y][x];
-    tile.isDefused = true;
 
     if (tile.isBomb) {
-      this.props.gameOver();
       this.revealBombs();
+      return this.props.setGameOver();
     }
+
+    tile.isDefused = true;
+    tile.isFlagged = false;
+
+
     if (tile.bombsNearby > 0) {
       return this.setState({ board });
     }
@@ -224,27 +240,28 @@ class Board extends Component {
   }
 
 
-  render = () => {
+  render() {
     const { board } = this.state;
+    const { handleChangeEmotion, isGameOver } = this.props;
     let k = 0;
     let j = 0;
     return (
-      <table>
-        <tbody>
-          {board.map(row => (
-            <tr key={k++}>
-              {row.map(tile => (
-                <Tile
-                  handleRightClick={this.handleRightClick}
-                  handleLeftClick={this.handleLeftClick}
-                  key={k + j++}
-                  {...tile}
-                />
+      <section className={css.board}>
+        {board.map(row => (
+          <div className={css.row} key={k++}>
+            {row.map(tile => (
+              <Tile
+                isGameOver={isGameOver}
+                handleChangeEmotion={handleChangeEmotion}
+                handleRightClick={this.handleRightClick}
+                handleLeftClick={this.handleLeftClick}
+                key={k + j++}
+                {...tile}
+              />
               ))}
-            </tr>
+          </div>
           ))}
-        </tbody>
-      </table>
+      </section>
     );
   }
 }
@@ -252,7 +269,9 @@ class Board extends Component {
 Board.propTypes = {
   height: PropTypes.number.isRequired,
   width: PropTypes.number.isRequired,
-  gameOver: PropTypes.func.isRequired,
+  isGameOver: PropTypes.bool.isRequired,
+  setGameOver: PropTypes.func.isRequired,
+  handleChangeEmotion: PropTypes.func.isRequired,
 };
 
 export default Board;

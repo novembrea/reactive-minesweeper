@@ -1,13 +1,29 @@
 :local .button {
-  height: 100%;
-  width: 100%;
-  background: transparent;
-  border: 0;
+  height: 30px;
+  width: 30px;
+  background: #f7f7f7;
+  border: 1;
   cursor: pointer;
+  &:disabled {
+    color: inherit;
+  }
+  &:focus {
+    outline: none;
+  }
 }
 
 :local .flag {
-  max-width: 100%;
+  width: 100%;
+}
+
+:local .clear {
+  border: 0;
+  background: transparent;
+}
+
+:local .marker {
+  font-size: 1rem;
+  font-weight: bolder;
 }
 
 :local .isBomb {

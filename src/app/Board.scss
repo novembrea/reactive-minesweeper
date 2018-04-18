@@ -1,0 +1,12 @@
+:local .board {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
+}
+
+:local .row {
+  display: flex;
+}

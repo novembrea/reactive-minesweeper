@@ -7,7 +7,16 @@
   padding-bottom: 20px;
 }
 
+:local .btn {
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  &:focus {
+    outline: 0;
+  }
+}
+
 :local .emoji {
-  height: 70px;
+  // height: 70px;
   width: auto;
 }

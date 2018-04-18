@@ -5,10 +5,12 @@ import onlyUpdateForKeys from 'recompose/onlyUpdateForKeys';
 
 import flag from '../images/flag.png';
 import mine from '../images/mine.png';
+import * as constants from './constants';
 
 import css from './Tile.scss';
 
 const Tile = ({
+  handleChangeEmotion,
   handleLeftClick,
   handleRightClick,
   x,
@@ -17,31 +19,62 @@ const Tile = ({
   isBomb,
   isFlagged,
   isDefused,
+  isGameOver,
 }) => {
+  const isMarker = isDefused && bombsNearby > 0;
+  let color;
+  if (isMarker) {
+    switch (bombsNearby) {
+      case 1:
+        color = 'blue';
+        break;
+      case 2:
+        color = 'green';
+        break;
+      case 3:
+        color = 'red';
+        break;
+      case 4:
+        color = 'ingido';
+        break;
+      default:
+        color = 'inherit';
+        break;
+    }
+  }
+
   const btnClasses = cn({
     [css.button]: true,
+    [css.marker]: isMarker,
+    [css.clear]: isDefused,
   });
+
   const text = () => {
     if (isFlagged) return <img className={css.flag} src={flag} alt='flagged' />;
     if (isDefused && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
-    if (isDefused) return bombsNearby || '';
-    if (isDefused && bombsNearby > 0) return <b>{bombsNearby}</b>;
-    return 'X';
+    if (isDefused) return bombsNearby ? <b style={{ color }}>{bombsNearby}</b> : '';
+    return '';
   };
+
+  const cantClick = isGameOver || isDefused;
+  const fnfilter = fn => (cantClick ? () => {} : fn);
+
   return (
-    <td>
-      <button
-        className={btnClasses}
-        onClick={handleLeftClick(x, y)}
-        onContextMenu={handleRightClick(x, y)}
-      >
-        {text()}
-      </button>
-    </td>
+    <button
+      // disabled={isGameOver || isDefused} sadly doesn't work properly
+      className={btnClasses}
+      onMouseDown={fnfilter(handleChangeEmotion(constants.WORRY))}
+      onClick={fnfilter(handleLeftClick(x, y))}
+      onContextMenu={fnfilter(handleRightClick(x, y))}
+    >
+      {text()}
+    </button>
   );
 };
 
 Tile.propTypes = {
+  isGameOver: PropTypes.bool.isRequired,
+  handleChangeEmotion: PropTypes.func.isRequired,
   handleRightClick: PropTypes.func.isRequired,
   handleLeftClick: PropTypes.func.isRequired,
   x: PropTypes.number.isRequired,
@@ -53,4 +86,4 @@ Tile.propTypes = {
 };
 
 
-export default onlyUpdateForKeys(['isFlagged', 'isDefused'])(Tile);
+export default onlyUpdateForKeys(['isFlagged', 'isDefused', 'isGameOver'])(Tile);
