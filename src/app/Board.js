@@ -13,6 +13,7 @@ function maketile(isBomb) {
     isBomb,
     isFlagged: false,
     isDefused: false,
+    isLastClick: false,
   };
 }
 
@@ -25,7 +26,7 @@ function maketile(isBomb) {
 class Board extends Component {
   constructor(props) {
     super(props);
-    const { height, width } = props;
+    const { height, width, bombs } = props;
 
     this.state = {
       board: [],
@@ -46,7 +47,7 @@ class Board extends Component {
 
     // These methods directly mutate state before
     // component has mounted.
-    this.init();
+    this.init(bombs);
     this.shuffle();
     this.toMatrix();
     this.assignMarkers();
@@ -54,7 +55,7 @@ class Board extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (this.props.isGameOver && !nextProps.isGameOver) {
-      this.init();
+      this.init(nextProps.bombs);
       this.shuffle();
       this.toMatrix();
       this.assignMarkers();
@@ -66,8 +67,7 @@ class Board extends Component {
    * Constructs the board as a flat array and
    * assigning bombs on the first n indices.
    */
-  init = () => {
-    const bombs = (this.width * this.height) / 10;
+  init = bombs => {
     this.state.board = Array(this.width * this.height)
       .fill()
       .map((x, i) => maketile(i < bombs));
@@ -212,12 +212,24 @@ class Board extends Component {
   }
 
   handleLeftClick = (x, y) => () => {
+    const {
+      isGameStarted,
+      finishGame,
+      startGame,
+      isGameOver,
+    } = this.props;
+
     const board = this.state.board.slice(0);
     const tile = board[y][x];
 
+    if (tile.isDefused || isGameOver) return false;
+    if (!isGameStarted) startGame();
+
+
     if (tile.isBomb) {
+      tile.isLastClick = true;
       this.revealBombs();
-      return this.props.setGameOver();
+      return finishGame();
     }
 
     tile.isDefused = true;
@@ -232,13 +244,24 @@ class Board extends Component {
   }
 
   handleRightClick = (x, y) => event => {
+    const { isGameOver, isGameStarted, startGame } = this.props;
     event.preventDefault();
     const board = this.state.board.slice(0);
     const tile = board[y][x];
+
+    if (tile.isDefused || isGameOver) return false;
+    if (!isGameStarted) startGame();
+
     tile.isFlagged = !tile.isFlagged;
+
+    if (tile.isFlagged) {
+      this.props.decrementBombsLeft();
+    } else {
+      this.props.incrementBombsLeft();
+    }
+
     return this.setState({ board });
   }
-
 
   render() {
     const { board } = this.state;
@@ -267,11 +290,16 @@ class Board extends Component {
 }
 
 Board.propTypes = {
-  height: PropTypes.number.isRequired,
-  width: PropTypes.number.isRequired,
-  isGameOver: PropTypes.bool.isRequired,
-  setGameOver: PropTypes.func.isRequired,
+  bombs: PropTypes.number.isRequired,
+  decrementBombsLeft: PropTypes.func.isRequired,
   handleChangeEmotion: PropTypes.func.isRequired,
+  height: PropTypes.number.isRequired,
+  incrementBombsLeft: PropTypes.func.isRequired,
+  isGameStarted: PropTypes.bool.isRequired,
+  isGameOver: PropTypes.bool.isRequired,
+  finishGame: PropTypes.func.isRequired,
+  startGame: PropTypes.func.isRequired,
+  width: PropTypes.number.isRequired,
 };
 
 export default Board;

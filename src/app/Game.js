@@ -10,50 +10,121 @@ class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      emotion: 'default',
+      bombs: 100,
+      bombsLeft: 100,
+      emotion: 'smile',
+      height: 15,
       isGameOver: false,
+      isGameStarted: false,
+      width: 30,
+      key: 0,
     };
   }
 
-  componentDidMount() {
-    document.addEventListener('mouseup', () => {
-      console.log('mup');
-      if (!this.state.isGameOver) {
-        this.setState({ emotion: 'smile' });
-      }
-    });
+  componentWillMount() {
+    document.addEventListener('mouseup', this.interceptMouseUp);
   }
 
-  setGameOver = () => {
+  componentWillUnmount() {
+    document.removeEventListener('mouseup', this.interceptMouseUp);
+  }
+
+  interceptMouseUp = () => {
+    if (!this.state.isGameOver) {
+      this.setState({ emotion: 'smile' });
+    }
+  }
+
+
+  /**
+   * Starts the game after the first click on a tile.
+   * Activates the timer in Header component.
+   */
+  startGame = () => {
     this.setState({
-      isGameOver: true,
-      emotion: 'dead',
+      emotion: emo.SMILE,
+      isGameOver: false,
+      isGameStarted: true,
     });
   }
 
-  restartGame = () => {
-    this.setState({ isGameOver: false, emotion: emo.SMILE });
+
+  /**
+   * Ends the game, preventing interaction with tiles.
+   * Halts the timer in Header component.
+   */
+  finishGame = () => {
+    this.setState({
+      emotion: 'dead',
+      isGameOver: true,
+      isGameStarted: false,
+    });
   }
 
-  handleChangeEmotion = emotion => event => {
+  /**
+   * Restarts the game from isGameOver state.
+   * If the game is running when the restart is requested
+   * set the state to defaults and increment the <key>
+   * in to invalidate entire component tree.
+   */
+  restartGame = () => {
+    if (this.state.isGameStarted) {
+      return this.setState({
+        bombs: 100,
+        bombsLeft: 100,
+        emotion: 'smile',
+        height: 15,
+        isGameOver: false,
+        isGameStarted: false,
+        width: 30,
+        key: this.state.key + 1,
+      });
+    }
+    return this.setState({
+      emotion: emo.SMILE,
+      isGameOver: false,
+      isGameStarted: false,
+    });
+  }
+
+  incrementBombsLeft = () => this.setState({ bombsLeft: this.state.bombsLeft + 1 })
+  decrementBombsLeft = () => this.setState({ bombsLeft: this.state.bombsLeft - 1 })
+
+  handleChangeEmotion = (event, emotion) => {
     if (event.button === 2) return;
     this.setState({ emotion });
   }
 
   render() {
-    const { emotion, isGameOver } = this.state;
+    const {
+      bombs,
+      bombsLeft,
+      emotion,
+      height,
+      isGameOver,
+      isGameStarted,
+      width,
+    } = this.state;
     return (
-      <section className={css.game}>
+      <section key={this.state.key} className={css.game}>
         <Header
-          restartGame={this.restartGame}
+          bombsLeft={bombsLeft}
           emotion={emotion}
+          isGameOver={isGameOver}
+          isGameStarted={isGameStarted}
+          restartGame={this.restartGame}
         />
         <Board
+          bombs={bombs || (width * height) / 10}
+          decrementBombsLeft={this.decrementBombsLeft}
           handleChangeEmotion={this.handleChangeEmotion}
-          height={30}
+          height={height}
+          incrementBombsLeft={this.incrementBombsLeft}
           isGameOver={isGameOver}
-          setGameOver={this.setGameOver}
-          width={30}
+          isGameStarted={isGameStarted}
+          finishGame={this.finishGame}
+          startGame={this.startGame}
+          width={width}
         />
       </section>
     );

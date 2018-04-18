@@ -1,7 +1,7 @@
 :local .button {
   height: 30px;
   width: 30px;
-  background: #f7f7f7;
+  background-color: #f7f7f7;
   border: 1;
   cursor: pointer;
   &:disabled {
@@ -12,13 +12,17 @@
   }
 }
 
+:local .isLastClick {
+  background-color: tomato !important;
+}
+
 :local .flag {
   width: 100%;
 }
 
 :local .clear {
   border: 0;
-  background: transparent;
+  background-color: transparent;
 }
 
 :local .marker {
@@ -28,7 +32,7 @@
 
 :local .isBomb {
   // border: 2px tomato solid;
-  background: tomato;
+  background-color: tomato;
   color: white;
 }
 

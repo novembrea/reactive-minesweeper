@@ -7,6 +7,14 @@
   padding-bottom: 20px;
 }
 
+:local .counter {
+  font-size: 3rem;
+  font-weight: bolder;
+  color: tomato;
+  width: 140px;
+  text-align: center;
+}
+
 :local .btn {
   cursor: pointer;
   background: transparent;

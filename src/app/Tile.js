@@ -10,16 +10,17 @@ import * as constants from './constants';
 import css from './Tile.scss';
 
 const Tile = ({
+  bombsNearby,
   handleChangeEmotion,
   handleLeftClick,
   handleRightClick,
+  isBomb,
+  isDefused,
+  isFlagged,
+  isGameOver,
+  isLastClick,
   x,
   y,
-  bombsNearby,
-  isBomb,
-  isFlagged,
-  isDefused,
-  isGameOver,
 }) => {
   const isMarker = isDefused && bombsNearby > 0;
   let color;
@@ -47,25 +48,27 @@ const Tile = ({
     [css.button]: true,
     [css.marker]: isMarker,
     [css.clear]: isDefused,
+    [css.isLastClick]: isLastClick,
   });
 
   const text = () => {
+    if (isFlagged && isDefused && isBomb) return <img className={css.flag} src={flag} alt='flagged' />;
     if (isFlagged) return <img className={css.flag} src={flag} alt='flagged' />;
     if (isDefused && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
     if (isDefused) return bombsNearby ? <b style={{ color }}>{bombsNearby}</b> : '';
     return '';
   };
 
-  const cantClick = isGameOver || isDefused;
-  const fnfilter = fn => (cantClick ? () => {} : fn);
-
   return (
     <button
-      // disabled={isGameOver || isDefused} sadly doesn't work properly
+      disabled={isGameOver}
       className={btnClasses}
-      onMouseDown={fnfilter(handleChangeEmotion(constants.WORRY))}
-      onClick={fnfilter(handleLeftClick(x, y))}
-      onContextMenu={fnfilter(handleRightClick(x, y))}
+      onMouseDown={event => {
+        if (isDefused) return;
+        handleChangeEmotion(event, constants.WORRY);
+      }}
+      onClick={handleLeftClick(x, y)}
+      onContextMenu={handleRightClick(x, y)}
     >
       {text()}
     </button>
@@ -73,16 +76,17 @@ const Tile = ({
 };
 
 Tile.propTypes = {
-  isGameOver: PropTypes.bool.isRequired,
+  bombsNearby: PropTypes.number.isRequired,
   handleChangeEmotion: PropTypes.func.isRequired,
-  handleRightClick: PropTypes.func.isRequired,
   handleLeftClick: PropTypes.func.isRequired,
+  handleRightClick: PropTypes.func.isRequired,
+  isBomb: PropTypes.bool.isRequired,
+  isDefused: PropTypes.bool.isRequired,
+  isFlagged: PropTypes.bool.isRequired,
+  isGameOver: PropTypes.bool.isRequired,
+  isLastClick: PropTypes.bool.isRequired,
   x: PropTypes.number.isRequired,
   y: PropTypes.number.isRequired,
-  bombsNearby: PropTypes.number.isRequired,
-  isBomb: PropTypes.bool.isRequired,
-  isFlagged: PropTypes.bool.isRequired,
-  isDefused: PropTypes.bool.isRequired,
 };
 
 
