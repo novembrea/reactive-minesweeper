@@ -1,0 +1,13 @@
+:local .header {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 1280px;
+  margin: auto;
+  padding-bottom: 20px;
+}
+
+:local .emoji {
+  height: 70px;
+  width: auto;
+}

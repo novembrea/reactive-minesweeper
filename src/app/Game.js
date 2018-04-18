@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from 'react';
+import Header from './Header';
 import Board from './Board';
 
 class Game extends Component {
@@ -15,7 +16,8 @@ class Game extends Component {
   render() {
     return (
       <Fragment>
-        <Board gameOver={this.gameOver} width={10} height={5} />
+        <Header />
+        <Board gameOver={this.gameOver} width={20} height={20} />
       </Fragment>
     );
   }

@@ -54,7 +54,7 @@ class Board extends Component {
    * assigning bombs on the first n indices.
    */
   init = () => {
-    const bombs = (this.width * this.height) / 10;
+    const bombs = (this.width * this.height) / 5;
     this.state.board = Array(this.width * this.height)
       .fill()
       .map((x, i) => maketile(i < bombs));
@@ -123,7 +123,7 @@ class Board extends Component {
   }
 
   /**
-   * Goes in all direction around the given coordinates
+   * Goes in all directions around the given coordinates
    * and returns array of surrounding tiles.
    */
   walkAround = (x, y) => {
