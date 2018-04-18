@@ -13,13 +13,13 @@ function maketile(isBomb) {
   };
 }
 
+/**
+ * Game board manager, takes care of all logic.
+ *
+ * @class Board
+ * @extends {Component}
+ */
 class Board extends Component {
-  /**
-   * Creates an instance of Board.
-   * @param {number} height height
-   * @param {number} width width
-   * @memberof Board
-   */
   constructor(props) {
     super(props);
     const { height, width } = props;
@@ -41,14 +41,16 @@ class Board extends Component {
       NW: (x, y) => [x - 1, y - 1],
     };
 
+    // These methods directly mutate state before
+    // component has mounted.
     this.init();
     this.shuffle();
     this.toMatrix();
-    this.mark();
+    this.assignMarkers();
   }
 
   /**
-   * Constructs the board as a flat array,
+   * Constructs the board as a flat array and
    * assigning bombs on the first n indices.
    */
   init = () => {
@@ -83,6 +85,7 @@ class Board extends Component {
     let y = 0;
     let x = 0;
     let c = 0;
+
     this.state.board = this.state.board.reduce((acc, tile, i) => {
       c++;
       /* eslint-disable no-param-reassign */
@@ -91,54 +94,70 @@ class Board extends Component {
       /* eslint-enable no-param-reassign */
 
       acc[acc.length - 1].push(tile);
+
+      // Row has been filled — insert another array.
       if (c === this.width) {
         c = 0;
         x = 0;
         y++;
+
+        // Skip insertion on the last iteration.
         if (i + 1 < this.state.board.length) acc.push([]);
       }
       return acc;
     }, [[]]);
   }
 
-  mark = () => {
-    this.state.board = this.state.board.map((row, x) => row.map((sq, y) => {
+
+  /**
+   * Assigns numeric markers to a bomb surrounding tiles.
+   */
+  assignMarkers = () => {
+    let { board } = this.state; // eslint-disable-line no-unused-vars
+    board = board.map((row, x) => row.map((tile, y) => {
       /* eslint-disable no-param-reassign */
-      sq.bombsNearby = sq.isBomb ? -1 : this.bombsNearby(x, y);
+      tile.bombsNearby = tile.isBomb ? -1 : this.walkAround(x, y).filter(t => t.isBomb).length;
       /* eslint-enable no-param-reassign */
-      return sq;
+      return tile;
     }));
   }
 
-  bombsNearby = (x, y) => {
-    let n = 0;
-    Object
-      .keys(this.directions)
-      .forEach(k => {
-        n += this.tileStep(...this.directions[k](x, y));
-      });
-    return n;
-  }
-
-  tileStep = (x, y) => {
+  /**
+   * Goes in all direction around the given coordinates
+   * and returns array of surrounding tiles.
+   */
+  walkAround = (x, y) => {
     const { board } = this.state;
-    if (!board[x] || !board[x][y]) return 0;
-    return Number(board[x][y].isBomb);
+    const surroundingTiles = [];
+
+    const step = (xCoord, yCoord) => {
+      if (!board[xCoord] || !board[xCoord][yCoord]) return false;
+      return board[xCoord][yCoord];
+    };
+
+    Object.values(this.directions).forEach(direction => {
+      const tile = step(...direction(x, y));
+      if (tile) surroundingTiles.push(tile);
+    });
+
+    return surroundingTiles;
   }
 
-  reveal(tile) {
+
+  /**
+   * If the clicked tile is clear, i.e. not a bomb and has no nearby bombs,
+   * start recursive journey around surrounding tiles and defuse
+   * all adjacent clear ones.
+   *
+   * @param {object} tile starting tile
+   */
+  defuseSurroundingTiles(tile) {
     const board = this.state.board.slice(0);
+
+    // Track tiles that need visiting and already visited ones.
+    // Stringify coordinates in order to avoid key duplicaions in a map.
     const toVisit = new Map([[[tile.x, tile.y].toString(), true]]);
     const visited = new Map();
-
-    const step = (x, y) => {
-      if (!board[y] || !board[y][x]) return;
-      const t = board[y][x];
-      if (t.bombsNearby === 0 && !toVisit.has([x, y].toString())) {
-        toVisit.set([x, y].toString(), true);
-      }
-      if (!t.isBomb) t.isDefused = true;
-    };
 
     const walk = () => {
       const it = toVisit.keys();
@@ -147,19 +166,28 @@ class Board extends Component {
         this.setState({ board });
         return;
       }
-      Object.keys(this.directions).forEach(k => {
-        if (!visited.has(value)) {
-          const [x, y] = value.split(',');
-          step(...this.directions[k](Number(x), Number(y)));
-        }
-      });
+
+      if (!visited.has(value)) {
+        const [x, y] = value.split(',');
+        this.walkAround(Number(y), Number(x)).forEach(t => {
+          if (t.bombsNearby === 0 && !toVisit.has([t.x, t.y].toString())) {
+            toVisit.set([t.x, t.y].toString(), true);
+          }
+          if (!t.isBomb) t.isDefused = true; // eslint-disable-line no-param-reassign
+        });
+      }
       toVisit.delete(value);
       visited.set(value, true);
       walk();
     };
+
     return walk();
   }
 
+
+  /**
+   * When the game is over reveal location of all bombs.
+   */
   revealBombs() {
     this.setState({
       board: this.state.board.map(row => row.map(tile => {
@@ -185,11 +213,15 @@ class Board extends Component {
       return this.setState({ board });
     }
 
-    return this.reveal(tile);
+    return this.defuseSurroundingTiles(tile);
   }
 
   handleRightClick = (x, y) => event => {
     event.preventDefault();
+    const board = this.state.board.slice(0);
+    const tile = board[y][x];
+    tile.isFlagged = !tile.isFlagged;
+    return this.setState({ board });
   }
 
 

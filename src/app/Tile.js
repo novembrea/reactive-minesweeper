@@ -26,8 +26,7 @@ const Tile = ({
     if (isDefused && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
     if (isDefused) return bombsNearby || '';
     if (isDefused && bombsNearby > 0) return <b>{bombsNearby}</b>;
-    return '???';
-    // return `${x} ${y}`;
+    return 'X';
   };
   return (
     <td>
