@@ -54,7 +54,7 @@ class Board extends Component {
    * assigning bombs on the first n indices.
    */
   init = () => {
-    const bombs = (this.width * this.height) / 5;
+    const bombs = (this.width * this.height) / 10;
     this.state.board = Array(this.width * this.height)
       .fill()
       .map((x, i) => maketile(i < bombs));
@@ -113,8 +113,7 @@ class Board extends Component {
    * Assigns numeric markers to a bomb surrounding tiles.
    */
   assignMarkers = () => {
-    let { board } = this.state; // eslint-disable-line no-unused-vars
-    board = board.map((row, x) => row.map((tile, y) => {
+    this.state.board = this.state.board.map((row, x) => row.map((tile, y) => {
       /* eslint-disable no-param-reassign */
       tile.bombsNearby = tile.isBomb ? -1 : this.walkAround(x, y).filter(t => t.isBomb).length;
       /* eslint-enable no-param-reassign */
@@ -156,8 +155,8 @@ class Board extends Component {
 
     // Track tiles that need visiting and already visited ones.
     // Stringify coordinates in order to avoid key duplicaions in a map.
-    const toVisit = new Map([[[tile.x, tile.y].toString(), true]]);
-    const visited = new Map();
+    const toVisit = new Set([[tile.x, tile.y].toString()]);
+    const visited = new Set();
 
     const walk = () => {
       const it = toVisit.keys();
@@ -171,13 +170,13 @@ class Board extends Component {
         const [x, y] = value.split(',');
         this.walkAround(Number(y), Number(x)).forEach(t => {
           if (t.bombsNearby === 0 && !toVisit.has([t.x, t.y].toString())) {
-            toVisit.set([t.x, t.y].toString(), true);
+            toVisit.add([t.x, t.y].toString());
           }
           if (!t.isBomb) t.isDefused = true; // eslint-disable-line no-param-reassign
         });
       }
       toVisit.delete(value);
-      visited.set(value, true);
+      visited.add(value);
       walk();
     };
 
