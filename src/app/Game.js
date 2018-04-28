@@ -88,6 +88,7 @@ class Game extends Component {
   decrementBombsLeft = () => this.setState({ bombsLeft: this.state.bombsLeft - 1 })
 
   handleChangeEmotion = (event, emotion) => {
+    // Ignore RMC.
     if (event.button === 2) return;
     this.setState({ emotion });
   }

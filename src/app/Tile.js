@@ -19,6 +19,7 @@ const Tile = ({
   isFlagged,
   isGameOver,
   isLastClick,
+  isQuestion,
   x,
   y,
 }) => {
@@ -49,11 +50,13 @@ const Tile = ({
     [css.marker]: isMarker,
     [css.clear]: isDefused,
     [css.isLastClick]: isLastClick,
+    [css.cross]: isFlagged && isDefused && isBomb,
   });
 
   const text = () => {
-    if (isFlagged && isDefused && isBomb) return <img className={css.flag} src={flag} alt='flagged' />;
-    if (isFlagged) return <img className={css.flag} src={flag} alt='flagged' />;
+    if (isQuestion) return '?';
+    if (isFlagged && isDefused && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
+    if (isFlagged) return '⚑';
     if (isBomb) return <img className={css.flag} src={mine} alt='mine' />;
     if (isDefused) return bombsNearby ? <b style={{ color }}>{bombsNearby}</b> : '';
     return '';
@@ -64,7 +67,7 @@ const Tile = ({
       disabled={isGameOver}
       className={btnClasses}
       onMouseDown={event => {
-        if (isDefused) return;
+        if (isDefused || isFlagged) return;
         handleChangeEmotion(event, constants.WORRY);
       }}
       onClick={handleLeftClick(x, y)}
@@ -85,9 +88,15 @@ Tile.propTypes = {
   isFlagged: PropTypes.bool.isRequired,
   isGameOver: PropTypes.bool.isRequired,
   isLastClick: PropTypes.bool.isRequired,
+  isQuestion: PropTypes.bool.isRequired,
   x: PropTypes.number.isRequired,
   y: PropTypes.number.isRequired,
 };
 
 
-export default onlyUpdateForKeys(['isFlagged', 'isDefused', 'isGameOver'])(Tile);
+export default onlyUpdateForKeys([
+  'isDefused',
+  'isFlagged',
+  'isGameOver',
+  'isQuestion',
+])(Tile);

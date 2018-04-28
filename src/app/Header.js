@@ -19,16 +19,13 @@ class Header extends Component {
     const nextIsGameStarted = np.isGameStarted;
     const nextIsGameOver = np.isGameOver;
     const { isGameStarted, isGameOver } = this.props;
-    // Next game state is not over, but current game state is over:
-    // the game was restarted via click on an emoji, clear the timer.
+    // The game was restarted via click on an emoji, clear the timer.
     if (!nextIsGameOver && isGameOver) this.setState({ elapsed: 0 });
 
-    // Next game state is started, but current game state is not started:
-    // the game was started via click on a tile, start new timer.
+    // The game was started via click on a tile, start new timer.
     if (nextIsGameStarted && !isGameStarted) this.start();
 
-    // Next game state is not over, but current game state is over:
-    // the player encountered the bomb, freeze timer.
+    // Player has encountered a bomb, freeze timer.
     if (nextIsGameOver && !isGameOver) this.stop();
   }
 
@@ -75,7 +72,7 @@ class Header extends Component {
     return (
       <div className={css.header}>
         <div className={css.counter}>
-          {bombsLeft}
+          {bombsLeft < 0 ? 0 : bombsLeft}
         </div>
         <button className={css.btn} onClick={restartGame}>
           <img

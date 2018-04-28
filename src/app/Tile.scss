@@ -1,14 +1,41 @@
 :local .button {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  padding: 0;
   height: 30px;
   width: 30px;
   background-color: #f7f7f7;
   border: 1;
+  font-size: 1.5rem;
   cursor: pointer;
+  img {
+    width: 25px;
+    height: 25px;
+  }
   &:disabled {
     color: inherit;
   }
   &:focus {
     outline: none;
+  }
+}
+
+:local .cross {
+  &:before, &:after {
+    position: absolute;
+    left: 13px;
+    top: 0;
+    content: ' ';
+    height: 30px;
+    width: 3px;
+    background-color: tomato;
+  }
+  &:before {
+    transform: rotate(45deg);
+  }
+  &:after {
+    transform: rotate(-45deg);
   }
 }
 

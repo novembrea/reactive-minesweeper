@@ -6,6 +6,11 @@ import Tile from './Tile';
 
 import css from './Board.scss';
 
+
+/**
+ * Tile producer.
+ * @param {boolean} isBomb is tile a bomb
+ */
 function maketile(isBomb) {
   return {
     x: 0,
@@ -13,13 +18,14 @@ function maketile(isBomb) {
     bombsNearby: 0,
     isBomb,
     isFlagged: false,
+    isQuestion: false,
     isDefused: false,
     isLastClick: false,
   };
 }
 
 /**
- * Game board manager, takes care of all logic.
+ * Game board manager, handles all interactions.
  *
  * @class Board
  * @extends {Component}
@@ -27,11 +33,12 @@ function maketile(isBomb) {
 class Board extends Component {
   constructor(props) {
     super(props);
-    const { height, width } = props;
+    const { height, width, bombs } = props;
 
     this.board = [];
     this.height = height;
     this.width = width;
+    this.bombs = bombs;
     this.defusedCount = 0;
     this.directions = {
       N: (x, y) => [x, y - 1],
@@ -49,10 +56,10 @@ class Board extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (this.props.isGameOver && !nextProps.isGameOver) {
+      this.bombs = nextProps.bombs;
       this.setup();
     }
   }
-
 
   /**
    * Setup launcher.
@@ -65,16 +72,14 @@ class Board extends Component {
     this.revealInitial();
   }
 
-
   /**
    * Constructs the board as a flat array and
-   * assigning bombs on the first n indices.
+   * assigns bombs on the first n indices.
    */
   init = () => {
-    const { bombs } = this.props;
     this.board = Array(this.width * this.height)
       .fill()
-      .map((x, i) => maketile(i < bombs));
+      .map((x, i) => maketile(i < this.bombs));
   }
 
   /**
@@ -138,9 +143,8 @@ class Board extends Component {
     }));
   }
 
-
   /**
-   * Get player to something start with by revealing intial bomb free location.
+   * Get player something to start with by revealing intial bomb free location.
    * !Good optimization candidate.
    */
   revealInitial = () => {
@@ -170,8 +174,8 @@ class Board extends Component {
       return b[yCoord][xCoord];
     };
 
-    Object.keys(this.directions).forEach(direction => {
-      const tile = step(...this.directions[direction](x, y));
+    Object.values(this.directions).forEach(direction => {
+      const tile = step(...direction(x, y));
       if (tile) surroundingTiles.push(tile);
     });
 
@@ -202,16 +206,21 @@ class Board extends Component {
       if (!visited.has(value)) {
         const [x, y] = value.split(',');
         this.walkAround(Number(x), Number(y)).forEach(t => {
-          if (t.isDefused) return;
+          if (t.isDefused || t.isFlagged) return;
           if (t.bombsNearby === 0 && !toVisit.has([t.x, t.y].toString())) {
             toVisit.add([t.x, t.y].toString());
           }
           if (!t.isBomb && !t.isDefused) {
             this.defusedCount++;
-            t.isDefused = true; // eslint-disable-line no-param-reassign
+            /* eslint-disable no-param-reassign */
+            t.isDefused = true;
+            t.isFlagged = false;
+            t.isQuestion = false;
+            /* eslint-enable no-param-reassign */
           }
         });
       }
+
       visited.add(value);
       toVisit.delete(value);
       walk();
@@ -232,7 +241,7 @@ class Board extends Component {
     }));
   }
 
-  handleLeftClick = (x, y) => () => {
+  handleLeftClick = (x, y) => event => {
     const {
       isGameStarted,
       finishGame,
@@ -243,10 +252,13 @@ class Board extends Component {
     const b = this.board;
     const tile = b[y][x];
 
-    if (tile.isDefused || isGameOver) return false;
+    if (isGameOver) return false;
+    if (tile.isDefused || tile.isFlagged || tile.isQuestion) {
+      return this.handleRightClick(x, y)(event);
+    }
     if (!isGameStarted) startGame();
 
-
+    // Game ends with a lose.
     if (tile.isBomb) {
       tile.isLastClick = true;
       this.revealBombs();
@@ -257,7 +269,8 @@ class Board extends Component {
     tile.isFlagged = false;
     this.defusedCount++;
 
-    if (this.defusedCount === (this.width * this.height) - this.props.bombs) {
+    // Game ends with a win.
+    if (this.defusedCount === (this.height * this.width) - this.bombs) {
       this.revealBombs();
       return finishGame(true);
     }
@@ -267,10 +280,6 @@ class Board extends Component {
     }
 
     this.defuseSurroundingTiles(tile.x, tile.y);
-    if (this.defusedCount === (this.height * this.width) - this.bombs) {
-      this.revealBombs();
-      return finishGame();
-    }
     return this.forceUpdate();
   }
 
@@ -283,12 +292,28 @@ class Board extends Component {
     if (tile.isDefused || isGameOver) return false;
     if (!isGameStarted) startGame();
 
-    tile.isFlagged = !tile.isFlagged;
+    switch (true) {
+      case !tile.isFlagged && !tile.isQuestion:
+        tile.isFlagged = true;
+        tile.isQuestion = false;
+        this.props.decrementBombsLeft();
+        break;
 
-    if (tile.isFlagged) {
-      return this.props.decrementBombsLeft();
+      case tile.isFlagged:
+        tile.isFlagged = false;
+        tile.isQuestion = true;
+        this.props.incrementBombsLeft();
+        break;
+
+      case tile.isQuestion:
+        tile.isFlagged = false;
+        tile.isQuestion = false;
+        break;
+
+      default:
+        break;
     }
-    return this.props.incrementBombsLeft();
+    return this.forceUpdate();
   }
 
   render() {
