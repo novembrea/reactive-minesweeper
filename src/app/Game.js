@@ -50,7 +50,6 @@ class Game extends Component {
     const { isDebugging } = this.state;
     this.setState({
       isDebugging: !isDebugging,
-      emotion: isDebugging ? constants.DEBUGGING : constants.SMILE,
     });
   }
 

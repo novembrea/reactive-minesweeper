@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import random from 'lodash/random';
+
 import Tile from './Tile';
-
-
 import css from './Board.scss';
-
 
 /**
  * Tile producer.
