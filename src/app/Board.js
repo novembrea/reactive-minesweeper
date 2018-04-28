@@ -182,8 +182,8 @@ class Board extends Component {
       return b[yCoord][xCoord];
     };
 
-    Object.values(this.directions).forEach(direction => {
-      const tile = step(...direction(x, y));
+    Object.keys(this.directions).forEach(k => {
+      const tile = step(...this.directions[k](x, y));
       if (tile) surroundingTiles.push(tile);
     });
 
