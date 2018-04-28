@@ -48,7 +48,7 @@ module.exports = {
     ],
   },
   output: {
-    filename: 'assets/[name].js',
+    filename: 'assets/[name]-[hash].js',
   },
   plugins: [
     new FaviconsWebpackPlugin('./src/images/1f60e.png'),
@@ -57,7 +57,7 @@ module.exports = {
       filename: 'index.html',
     }),
     new MiniCssExtractPlugin({
-      filename: 'assets/[name].css',
+      filename: 'assets/[name]-[hash].css',
     }),
     new CleanWebpackPlugin(['dist']),
     new OptimizeCssAssetsPlugin({
