@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import cn from 'classnames';
 import onlyUpdateForKeys from 'recompose/onlyUpdateForKeys';
 
-import flag from '../images/flag.png';
 import mine from '../images/mine.png';
 import * as constants from './constants';
 
@@ -15,6 +14,7 @@ const Tile = ({
   handleLeftClick,
   handleRightClick,
   isBomb,
+  isDebugging,
   isDefused,
   isFlagged,
   isGameOver,
@@ -25,7 +25,7 @@ const Tile = ({
 }) => {
   const isMarker = isDefused && bombsNearby > 0;
   let color;
-  if (isMarker) {
+  if (isMarker || isDebugging) {
     switch (bombsNearby) {
       case 1:
         color = 'blue';
@@ -39,25 +39,40 @@ const Tile = ({
       case 4:
         color = 'ingido';
         break;
+      case 5:
+        color = 'darkred';
+        break;
+      case 6:
+        color = 'cornflowerblue';
+        break;
+      case 7:
+        color = 'crimson';
+        break;
+      case 8:
+        color = 'crimson';
+        break;
       default:
-        color = 'inherit';
+        color = 'deeppink';
         break;
     }
   }
 
   const btnClasses = cn({
     [css.button]: true,
-    [css.marker]: isMarker,
+    [css.marker]: isMarker || isDebugging,
     [css.clear]: isDefused,
     [css.isLastClick]: isLastClick,
     [css.cross]: isFlagged && isDefused && isBomb,
   });
 
-  const text = () => {
-    if (isQuestion) return '?';
+  // TODO: maybe do something about it.
+  const content = () => {
+    if (isDebugging && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
+    if (isDebugging) return bombsNearby ? <b style={{ color }}>{bombsNearby}</b> : '';
     if (isFlagged && isDefused && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
-    if (isFlagged) return '⚑';
-    if (isBomb) return <img className={css.flag} src={mine} alt='mine' />;
+    if (isQuestion) return '?';
+    if (isFlagged) return <span style={{ color: 'red' }}>⚑</span>;
+    if (isDefused && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
     if (isDefused) return bombsNearby ? <b style={{ color }}>{bombsNearby}</b> : '';
     return '';
   };
@@ -67,13 +82,13 @@ const Tile = ({
       disabled={isGameOver}
       className={btnClasses}
       onMouseDown={event => {
-        if (isDefused || isFlagged) return;
+        if (isDefused || isFlagged || isDebugging) return;
         handleChangeEmotion(event, constants.WORRY);
       }}
       onClick={handleLeftClick(x, y)}
       onContextMenu={handleRightClick(x, y)}
     >
-      {text()}
+      {content()}
     </button>
   );
 };
@@ -84,6 +99,7 @@ Tile.propTypes = {
   handleLeftClick: PropTypes.func.isRequired,
   handleRightClick: PropTypes.func.isRequired,
   isBomb: PropTypes.bool.isRequired,
+  isDebugging: PropTypes.bool.isRequired,
   isDefused: PropTypes.bool.isRequired,
   isFlagged: PropTypes.bool.isRequired,
   isGameOver: PropTypes.bool.isRequired,
@@ -99,4 +115,5 @@ export default onlyUpdateForKeys([
   'isFlagged',
   'isGameOver',
   'isQuestion',
+  'isDebugging',
 ])(Tile);

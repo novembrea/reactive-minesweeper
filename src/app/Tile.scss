@@ -1,42 +1,37 @@
 :local .button {
-  display: flex;
-  justify-content: center;
-  position: relative;
-  padding: 0;
-  height: 30px;
-  width: 30px;
   background-color: #f7f7f7;
   border: 1;
-  font-size: 1.5rem;
   cursor: pointer;
+  display: flex;
+  font-size: 1.2rem;
+  height: 25px;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  width: 25px;
+
   img {
-    width: 25px;
-    height: 25px;
+    width: 20px;
+    height: 20px;
   }
-  &:disabled {
-    color: inherit;
-  }
-  &:focus {
-    outline: none;
-  }
+
+  &:disabled { color: inherit; }
+  &:focus { outline: none; }
 }
 
 :local .cross {
   &:before, &:after {
     position: absolute;
-    left: 13px;
+    left: 12px;
     top: 0;
     content: ' ';
-    height: 30px;
+    height: 28px;
     width: 3px;
     background-color: tomato;
   }
-  &:before {
-    transform: rotate(45deg);
-  }
-  &:after {
-    transform: rotate(-45deg);
-  }
+
+  &:before { transform: rotate(45deg); }
+  &:after { transform: rotate(-45deg); }
 }
 
 :local .isLastClick {
@@ -55,11 +50,5 @@
 :local .marker {
   font-size: 1rem;
   font-weight: bolder;
-}
-
-:local .isBomb {
-  // border: 2px tomato solid;
-  background-color: tomato;
-  color: white;
 }
 

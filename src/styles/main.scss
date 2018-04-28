@@ -6,21 +6,13 @@ html {
   font-family: "Roboto";
 }
 
-body {
-  padding: 50px;
-}
-
-table {
-  border: 2px solid;
-  border-collapse: collapse;
+footer {
+  max-width: 1280px;
   margin: 0 auto;
-}
-
-td {
-  border: 2px solid;
-  padding: 0;
-  margin: 0;
-  width: 25px;
-  height: 25px;
-  text-align: center
+  padding: 25px;
+  text-align: center;
+  a {
+    color: cornflowerblue;
+    font-weight: bolder;
+  }
 }

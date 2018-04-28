@@ -9,14 +9,17 @@ import Game from './Game';
 const App = () => (
   <Fragment>
     <Helmet>
-      <title>Minesweeper</title>
+      <title>Minesweeper in React</title>
       <meta charSet='utf-8' />
       <meta
         name='description'
-        content='Minesweeper game in React'
+        content='Minesweeper game written with React'
       />
     </Helmet>
     <Game />
+    <footer>
+      <p><a href='https://github.com/nvma/reactive-minesweeper'>Source on GitHub</a></p>
+    </footer>
   </Fragment>
 );
 

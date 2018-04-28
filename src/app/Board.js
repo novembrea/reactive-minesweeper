@@ -13,14 +13,14 @@ import css from './Board.scss';
  */
 function maketile(isBomb) {
   return {
-    x: 0,
-    y: 0,
     bombsNearby: 0,
     isBomb,
-    isFlagged: false,
-    isQuestion: false,
     isDefused: false,
+    isFlagged: false,
     isLastClick: false,
+    isQuestion: false,
+    x: 0,
+    y: 0,
   };
 }
 
@@ -36,10 +36,11 @@ class Board extends Component {
     const { height, width, bombs } = props;
 
     this.board = [];
-    this.height = height;
-    this.width = width;
     this.bombs = bombs;
     this.defusedCount = 0;
+    this.height = height;
+    this.width = width;
+
     this.directions = {
       N: (x, y) => [x, y - 1],
       NE: (x, y) => [x + 1, y - 1],
@@ -55,8 +56,15 @@ class Board extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.isGameOver && !nextProps.isGameOver) {
-      this.bombs = nextProps.bombs;
+    if ((this.props.isGameOver && !this.props.isGameOver)
+      || nextProps.bombs !== this.props.bombs) {
+      const { height, width, bombs } = nextProps;
+      this.board = [];
+      this.bombs = bombs;
+      this.bombs = bombs;
+      this.defusedCount = 0;
+      this.height = height;
+      this.width = width;
       this.setup();
     }
   }
@@ -104,9 +112,9 @@ class Board extends Component {
    * Reduces flat board array into a matrix.
    */
   toMatrix = () => {
-    let y = 0;
-    let x = 0;
     let c = 0;
+    let x = 0;
+    let y = 0;
 
     this.board = this.board.reduce((acc, tile, i) => {
       c++;
@@ -202,7 +210,6 @@ class Board extends Component {
       if (done) {
         return;
       }
-
       if (!visited.has(value)) {
         const [x, y] = value.split(',');
         this.walkAround(Number(x), Number(y)).forEach(t => {
@@ -220,7 +227,6 @@ class Board extends Component {
           }
         });
       }
-
       visited.add(value);
       toVisit.delete(value);
       walk();
@@ -253,9 +259,12 @@ class Board extends Component {
     const tile = b[y][x];
 
     if (isGameOver) return false;
+
+    // When clicked on marked tile delegate logic to the RightClick handler.
     if (tile.isDefused || tile.isFlagged || tile.isQuestion) {
       return this.handleRightClick(x, y)(event);
     }
+
     if (!isGameStarted) startGame();
 
     // Game ends with a lose.
@@ -317,7 +326,7 @@ class Board extends Component {
   }
 
   render() {
-    const { handleChangeEmotion, isGameOver } = this.props;
+    const { handleChangeEmotion, isGameOver, isDebugging } = this.props;
     let k = 0;
     let j = 0;
     return (
@@ -326,16 +335,17 @@ class Board extends Component {
           <div className={css.row} key={k++}>
             {row.map(tile => (
               <Tile
-                isGameOver={isGameOver}
                 handleChangeEmotion={handleChangeEmotion}
-                handleRightClick={this.handleRightClick}
                 handleLeftClick={this.handleLeftClick}
+                handleRightClick={this.handleRightClick}
+                isDebugging={isDebugging}
+                isGameOver={isGameOver}
                 key={k + j++}
                 {...tile}
               />
-            ))}
+              ))}
           </div>
-        ))}
+          ))}
       </section>
     );
   }
@@ -344,12 +354,13 @@ class Board extends Component {
 Board.propTypes = {
   bombs: PropTypes.number.isRequired,
   decrementBombsLeft: PropTypes.func.isRequired,
+  finishGame: PropTypes.func.isRequired,
   handleChangeEmotion: PropTypes.func.isRequired,
   height: PropTypes.number.isRequired,
   incrementBombsLeft: PropTypes.func.isRequired,
-  isGameStarted: PropTypes.bool.isRequired,
+  isDebugging: PropTypes.bool.isRequired,
   isGameOver: PropTypes.bool.isRequired,
-  finishGame: PropTypes.func.isRequired,
+  isGameStarted: PropTypes.bool.isRequired,
   startGame: PropTypes.func.isRequired,
   width: PropTypes.number.isRequired,
 };

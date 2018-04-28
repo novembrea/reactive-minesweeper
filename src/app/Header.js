@@ -5,11 +5,18 @@ import basic from '../images/1f610.png';
 import cool from '../images/1f60e.png';
 import dead from '../images/1f635.png';
 import worry from '../images/1f61f.png';
+import debugging from '../images/1f479.png';
 import css from './Header.scss';
 
 import * as constants from './constants';
 
 
+/**
+ * Renders bombsLeft counter, timer and emoji.
+ *
+ * @class Header
+ * @extends {Component}
+ */
 class Header extends Component {
   state = {
     elapsed: 0,
@@ -51,6 +58,7 @@ class Header extends Component {
     const {
       bombsLeft,
       emotion,
+      isDebugging,
       restartGame,
     } = this.props;
     let emoji;
@@ -69,6 +77,8 @@ class Header extends Component {
         emoji = basic;
         break;
     }
+
+    if (isDebugging) emoji = debugging;
     return (
       <div className={css.header}>
         <div className={css.counter}>
@@ -78,7 +88,7 @@ class Header extends Component {
           <img
             className={css.emoji}
             src={emoji}
-            alt=''
+            alt='Emoji face'
           />
         </button>
         <div className={css.counter}>
@@ -90,10 +100,11 @@ class Header extends Component {
 }
 
 Header.propTypes = {
-  isGameStarted: PropTypes.bool.isRequired,
-  isGameOver: PropTypes.bool.isRequired,
   bombsLeft: PropTypes.number.isRequired,
   emotion: PropTypes.string.isRequired,
+  isDebugging: PropTypes.bool.isRequired,
+  isGameOver: PropTypes.bool.isRequired,
+  isGameStarted: PropTypes.bool.isRequired,
   restartGame: PropTypes.func.isRequired,
 };
 

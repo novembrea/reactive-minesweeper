@@ -1,7 +1,9 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 
 import Header from './Header';
 import Board from './Board';
+import Settings from './Settings';
+
 import css from './Game.scss';
 import * as constants from './constants';
 
@@ -16,14 +18,13 @@ class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      bombs: constants.DEFAULT_BOMBS,
-      bombsLeft: constants.DEFAULT_BOMBS,
+      ...constants.INTERMEDIATE,
       emotion: constants.SMILE,
-      height: constants.DEFAULT_HEIGHT,
+      isDebugging: false,
       isGameOver: false,
       isGameStarted: false,
+      isSettingsOpen: false,
       key: 0,
-      width: constants.DEFAULT_WIDTH,
     };
   }
 
@@ -41,6 +42,17 @@ class Game extends Component {
     }
   }
 
+  toggleSettings = () => {
+    this.setState({ isSettingsOpen: !this.state.isSettingsOpen });
+  }
+
+  toggleDebug = () => {
+    const { isDebugging } = this.state;
+    this.setState({
+      isDebugging: !isDebugging,
+      emotion: isDebugging ? constants.DEBUGGING : constants.SMILE,
+    });
+  }
 
   /**
    * Starts the game after the first click on a tile.
@@ -72,17 +84,20 @@ class Game extends Component {
    * If the game is running when the restart is requested
    * set the state to defaults and increment the <key>
    * in to invalidate entire component tree.
+   *
+   * @param {string} newDifficulty if the game was restarted from Settings.
    */
-  restartGame = () => this.setState({
-    bombs: constants.DEFAULT_BOMBS,
-    bombsLeft: constants.DEFAULT_BOMBS,
-    emotion: constants.SMILE,
-    height: constants.DEFAULT_HEIGHT,
-    isGameOver: false,
-    isGameStarted: false,
-    width: constants.DEFAULT_WIDTH,
-    key: this.state.key + 1,
-  })
+  restartGame = newDifficulty => {
+    let { difficulty } = this.state;
+    if (newDifficulty) difficulty = newDifficulty;
+    return this.setState({
+      ...constants[difficulty],
+      emotion: constants.SMILE,
+      isGameOver: false,
+      isGameStarted: false,
+      key: this.state.key + 1,
+    });
+  }
 
   incrementBombsLeft = () => this.setState({ bombsLeft: this.state.bombsLeft + 1 })
   decrementBombsLeft = () => this.setState({ bombsLeft: this.state.bombsLeft - 1 })
@@ -97,34 +112,53 @@ class Game extends Component {
     const {
       bombs,
       bombsLeft,
+      difficulty,
       emotion,
       height,
+      isDebugging,
       isGameOver,
       isGameStarted,
+      isSettingsOpen,
       width,
     } = this.state;
     return (
-      <section key={this.state.key} className={css.game}>
-        <Header
-          bombsLeft={bombsLeft}
-          emotion={emotion}
-          isGameOver={isGameOver}
-          isGameStarted={isGameStarted}
-          restartGame={this.restartGame}
+      <Fragment>
+        <aside className={css.settingsBtn}>
+          <button onClick={this.toggleSettings}>
+            settings
+          </button>
+        </aside>
+        <Settings
+          currentDifficulty={difficulty}
+          isDebugging={isDebugging}
+          isOpen={isSettingsOpen}
+          setDifficulty={this.restartGame}
+          toggleDebug={this.toggleDebug}
         />
-        <Board
-          bombs={bombs || (width * height) / 10}
-          decrementBombsLeft={this.decrementBombsLeft}
-          handleChangeEmotion={this.handleChangeEmotion}
-          height={height}
-          incrementBombsLeft={this.incrementBombsLeft}
-          isGameOver={isGameOver}
-          isGameStarted={isGameStarted}
-          finishGame={this.finishGame}
-          startGame={this.startGame}
-          width={width}
-        />
-      </section>
+        <section key={this.state.key} className={css.game}>
+          <Header
+            bombsLeft={bombsLeft}
+            emotion={emotion}
+            isDebugging={isDebugging}
+            isGameOver={isGameOver}
+            isGameStarted={isGameStarted}
+            restartGame={this.restartGame}
+          />
+          <Board
+            bombs={bombs || (width * height) / 10}
+            decrementBombsLeft={this.decrementBombsLeft}
+            finishGame={this.finishGame}
+            handleChangeEmotion={this.handleChangeEmotion}
+            height={height}
+            incrementBombsLeft={this.incrementBombsLeft}
+            isDebugging={isDebugging}
+            isGameOver={isGameOver}
+            isGameStarted={isGameStarted}
+            startGame={this.startGame}
+            width={width}
+          />
+        </section>
+      </Fragment>
     );
   }
 }
