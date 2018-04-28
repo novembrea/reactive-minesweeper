@@ -54,7 +54,7 @@ const Tile = ({
   const text = () => {
     if (isFlagged && isDefused && isBomb) return <img className={css.flag} src={flag} alt='flagged' />;
     if (isFlagged) return <img className={css.flag} src={flag} alt='flagged' />;
-    if (isDefused && isBomb) return <img className={css.flag} src={mine} alt='mine' />;
+    if (isBomb) return <img className={css.flag} src={mine} alt='mine' />;
     if (isDefused) return bombsNearby ? <b style={{ color }}>{bombsNearby}</b> : '';
     return '';
   };

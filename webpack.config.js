@@ -4,6 +4,7 @@ const webpack = require('webpack'); // eslint-disable-line
 const HtmlWebPackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const nano = require('cssnano');
@@ -17,7 +18,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
@@ -50,6 +51,7 @@ module.exports = {
     filename: 'assets/[name].js',
   },
   plugins: [
+    new FaviconsWebpackPlugin('./src/images/1f60e.png'),
     new HtmlWebPackPlugin({
       template: './src/index.html',
       filename: 'index.html',

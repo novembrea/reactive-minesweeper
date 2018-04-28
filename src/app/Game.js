@@ -1,23 +1,29 @@
 import React, { Component } from 'react';
+
 import Header from './Header';
 import Board from './Board';
-
 import css from './Game.scss';
+import * as constants from './constants';
 
-import * as emo from './constants';
-
+/**
+ * Game state manager, sets the rules and
+ * gives Board methods to manipulate state.
+ *
+ * @class Game
+ * @extends {Component}
+ */
 class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      bombs: 100,
-      bombsLeft: 100,
-      emotion: 'smile',
-      height: 15,
+      bombs: constants.DEFAULT_BOMBS,
+      bombsLeft: constants.DEFAULT_BOMBS,
+      emotion: constants.SMILE,
+      height: constants.DEFAULT_HEIGHT,
       isGameOver: false,
       isGameStarted: false,
-      width: 30,
       key: 0,
+      width: constants.DEFAULT_WIDTH,
     };
   }
 
@@ -31,7 +37,7 @@ class Game extends Component {
 
   interceptMouseUp = () => {
     if (!this.state.isGameOver) {
-      this.setState({ emotion: 'smile' });
+      this.setState({ emotion: constants.SMILE });
     }
   }
 
@@ -42,7 +48,7 @@ class Game extends Component {
    */
   startGame = () => {
     this.setState({
-      emotion: emo.SMILE,
+      emotion: constants.SMILE,
       isGameOver: false,
       isGameStarted: true,
     });
@@ -53,9 +59,9 @@ class Game extends Component {
    * Ends the game, preventing interaction with tiles.
    * Halts the timer in Header component.
    */
-  finishGame = () => {
+  finishGame = (isWin = false) => {
     this.setState({
-      emotion: 'dead',
+      emotion: isWin ? constants.COOL : constants.DEAD,
       isGameOver: true,
       isGameStarted: false,
     });
@@ -67,25 +73,16 @@ class Game extends Component {
    * set the state to defaults and increment the <key>
    * in to invalidate entire component tree.
    */
-  restartGame = () => {
-    if (this.state.isGameStarted) {
-      return this.setState({
-        bombs: 100,
-        bombsLeft: 100,
-        emotion: 'smile',
-        height: 15,
-        isGameOver: false,
-        isGameStarted: false,
-        width: 30,
-        key: this.state.key + 1,
-      });
-    }
-    return this.setState({
-      emotion: emo.SMILE,
-      isGameOver: false,
-      isGameStarted: false,
-    });
-  }
+  restartGame = () => this.setState({
+    bombs: constants.DEFAULT_BOMBS,
+    bombsLeft: constants.DEFAULT_BOMBS,
+    emotion: constants.SMILE,
+    height: constants.DEFAULT_HEIGHT,
+    isGameOver: false,
+    isGameStarted: false,
+    width: constants.DEFAULT_WIDTH,
+    key: this.state.key + 1,
+  })
 
   incrementBombsLeft = () => this.setState({ bombsLeft: this.state.bombsLeft + 1 })
   decrementBombsLeft = () => this.setState({ bombsLeft: this.state.bombsLeft - 1 })

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import random from 'lodash/random';
 import Tile from './Tile';
 
 
@@ -26,14 +27,12 @@ function maketile(isBomb) {
 class Board extends Component {
   constructor(props) {
     super(props);
-    const { height, width, bombs } = props;
+    const { height, width } = props;
 
-    this.state = {
-      board: [],
-    };
-
+    this.board = [];
     this.height = height;
     this.width = width;
+    this.defusedCount = 0;
     this.directions = {
       N: (x, y) => [x, y - 1],
       NE: (x, y) => [x + 1, y - 1],
@@ -45,21 +44,25 @@ class Board extends Component {
       NW: (x, y) => [x - 1, y - 1],
     };
 
-    // These methods directly mutate state before
-    // component has mounted.
-    this.init(bombs);
-    this.shuffle();
-    this.toMatrix();
-    this.assignMarkers();
+    this.setup();
   }
 
   componentWillReceiveProps(nextProps) {
     if (this.props.isGameOver && !nextProps.isGameOver) {
-      this.init(nextProps.bombs);
-      this.shuffle();
-      this.toMatrix();
-      this.assignMarkers();
+      this.setup();
     }
+  }
+
+
+  /**
+   * Setup launcher.
+   */
+  setup = () => {
+    this.init();
+    this.shuffle();
+    this.toMatrix();
+    this.assignMarkers();
+    this.revealInitial();
   }
 
 
@@ -67,8 +70,9 @@ class Board extends Component {
    * Constructs the board as a flat array and
    * assigning bombs on the first n indices.
    */
-  init = bombs => {
-    this.state.board = Array(this.width * this.height)
+  init = () => {
+    const { bombs } = this.props;
+    this.board = Array(this.width * this.height)
       .fill()
       .map((x, i) => maketile(i < bombs));
   }
@@ -78,16 +82,16 @@ class Board extends Component {
    * bombs randomly around the board.
    */
   shuffle = () => {
-    const { board } = this.state;
-    let curr = board.length;
+    const b = this.board;
+    let curr = b.length;
     let rand = 0;
     let temp = null;
     while (curr !== 0) {
       rand = Math.floor(Math.random() * curr);
       curr -= 1;
-      temp = board[curr];
-      board[curr] = board[rand];
-      board[rand] = temp;
+      temp = b[curr];
+      b[curr] = b[rand];
+      b[rand] = temp;
     }
   }
 
@@ -99,7 +103,7 @@ class Board extends Component {
     let x = 0;
     let c = 0;
 
-    this.state.board = this.state.board.reduce((acc, tile, i) => {
+    this.board = this.board.reduce((acc, tile, i) => {
       c++;
       /* eslint-disable no-param-reassign */
       tile.x = x++;
@@ -115,7 +119,7 @@ class Board extends Component {
         y++;
 
         // Skip insertion on the last iteration.
-        if (i + 1 < this.state.board.length) acc.push([]);
+        if (i + 1 < this.board.length) acc.push([]);
       }
       return acc;
     }, [[]]);
@@ -126,7 +130,7 @@ class Board extends Component {
    * Assigns numeric markers to a bomb surrounding tiles.
    */
   assignMarkers = () => {
-    this.state.board = this.state.board.map((row, x) => row.map((tile, y) => {
+    this.board = this.board.map((row, y) => row.map((tile, x) => {
       /* eslint-disable no-param-reassign */
       tile.bombsNearby = tile.isBomb ? -1 : this.walkAround(x, y).filter(t => t.isBomb).length;
       /* eslint-enable no-param-reassign */
@@ -134,21 +138,40 @@ class Board extends Component {
     }));
   }
 
+
+  /**
+   * Get player to something start with by revealing intial bomb free location.
+   * !Good optimization candidate.
+   */
+  revealInitial = () => {
+    const randXY = () => [random(0, this.width - 1), random(0, this.height - 1)];
+    let defused = false;
+    while (!defused) {
+      const [x, y] = randXY();
+      const tile = this.board[y][x];
+      if (!tile.isBomb && tile.bombsNearby === 0) {
+        this.defuseSurroundingTiles(x, y);
+        defused = true;
+        return;
+      }
+    }
+  }
+
   /**
    * Goes in all directions around the given coordinates
    * and returns array of surrounding tiles.
    */
   walkAround = (x, y) => {
-    const { board } = this.state;
+    const b = this.board;
     const surroundingTiles = [];
 
     const step = (xCoord, yCoord) => {
-      if (!board[xCoord] || !board[xCoord][yCoord]) return false;
-      return board[xCoord][yCoord];
+      if (!b[yCoord] || !b[yCoord][xCoord]) return false;
+      return b[yCoord][xCoord];
     };
 
-    Object.values(this.directions).forEach(direction => {
-      const tile = step(...direction(x, y));
+    Object.keys(this.directions).forEach(direction => {
+      const tile = step(...this.directions[direction](x, y));
       if (tile) surroundingTiles.push(tile);
     });
 
@@ -161,54 +184,52 @@ class Board extends Component {
    * start recursive journey around surrounding tiles and defuse
    * all adjacent clear ones.
    *
-   * @param {object} tile starting tile
+   * @param {number} startingX x coord
+   * @param {number} startingY y coord
    */
-  defuseSurroundingTiles(tile) {
-    const board = this.state.board.slice(0);
-
+  defuseSurroundingTiles(startingX, startingY) {
     // Track tiles that need visiting and already visited ones.
-    // Stringify coordinates in order to avoid key duplicaions in a map.
-    const toVisit = new Set([[tile.x, tile.y].toString()]);
+    // Stringify coordinates in order to avoid key duplicaions in a set.
+    const toVisit = new Set([[startingX, startingY].toString()]);
     const visited = new Set();
-
     const walk = () => {
       const it = toVisit.keys();
       const { value, done } = it.next();
       if (done) {
-        this.setState({ board });
         return;
       }
 
       if (!visited.has(value)) {
         const [x, y] = value.split(',');
-        this.walkAround(Number(y), Number(x)).forEach(t => {
+        this.walkAround(Number(x), Number(y)).forEach(t => {
+          if (t.isDefused) return;
           if (t.bombsNearby === 0 && !toVisit.has([t.x, t.y].toString())) {
             toVisit.add([t.x, t.y].toString());
           }
-          if (!t.isBomb) t.isDefused = true; // eslint-disable-line no-param-reassign
+          if (!t.isBomb && !t.isDefused) {
+            this.defusedCount++;
+            t.isDefused = true; // eslint-disable-line no-param-reassign
+          }
         });
       }
-      toVisit.delete(value);
       visited.add(value);
+      toVisit.delete(value);
       walk();
     };
 
-    return walk();
+    walk();
   }
-
 
   /**
    * When the game is over reveal location of all bombs.
    */
   revealBombs() {
-    this.setState({
-      board: this.state.board.map(row => row.map(tile => {
-        if (tile.isBomb) {
-          tile.isDefused = true; // eslint-disable-line no-param-reassign
-        }
-        return tile;
-      })),
-    });
+    this.board = this.board.map(row => row.map(tile => {
+      if (tile.isBomb) {
+        tile.isDefused = true; // eslint-disable-line no-param-reassign
+      }
+      return tile;
+    }));
   }
 
   handleLeftClick = (x, y) => () => {
@@ -219,8 +240,8 @@ class Board extends Component {
       isGameOver,
     } = this.props;
 
-    const board = this.state.board.slice(0);
-    const tile = board[y][x];
+    const b = this.board;
+    const tile = b[y][x];
 
     if (tile.isDefused || isGameOver) return false;
     if (!isGameStarted) startGame();
@@ -234,20 +255,30 @@ class Board extends Component {
 
     tile.isDefused = true;
     tile.isFlagged = false;
+    this.defusedCount++;
 
-
-    if (tile.bombsNearby > 0) {
-      return this.setState({ board });
+    if (this.defusedCount === (this.width * this.height) - this.props.bombs) {
+      this.revealBombs();
+      return finishGame(true);
     }
 
-    return this.defuseSurroundingTiles(tile);
+    if (tile.bombsNearby > 0) {
+      return this.forceUpdate();
+    }
+
+    this.defuseSurroundingTiles(tile.x, tile.y);
+    if (this.defusedCount === (this.height * this.width) - this.bombs) {
+      this.revealBombs();
+      return finishGame();
+    }
+    return this.forceUpdate();
   }
 
   handleRightClick = (x, y) => event => {
     const { isGameOver, isGameStarted, startGame } = this.props;
     event.preventDefault();
-    const board = this.state.board.slice(0);
-    const tile = board[y][x];
+    const b = this.board;
+    const tile = b[y][x];
 
     if (tile.isDefused || isGameOver) return false;
     if (!isGameStarted) startGame();
@@ -255,22 +286,18 @@ class Board extends Component {
     tile.isFlagged = !tile.isFlagged;
 
     if (tile.isFlagged) {
-      this.props.decrementBombsLeft();
-    } else {
-      this.props.incrementBombsLeft();
+      return this.props.decrementBombsLeft();
     }
-
-    return this.setState({ board });
+    return this.props.incrementBombsLeft();
   }
 
   render() {
-    const { board } = this.state;
     const { handleChangeEmotion, isGameOver } = this.props;
     let k = 0;
     let j = 0;
     return (
       <section className={css.board}>
-        {board.map(row => (
+        {this.board.map(row => (
           <div className={css.row} key={k++}>
             {row.map(tile => (
               <Tile
@@ -281,9 +308,9 @@ class Board extends Component {
                 key={k + j++}
                 {...tile}
               />
-              ))}
+            ))}
           </div>
-          ))}
+        ))}
       </section>
     );
   }
