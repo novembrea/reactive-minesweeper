@@ -39,6 +39,9 @@ class Board extends Component {
     this.height = height;
     this.width = width;
 
+    this.isLeftMouseDown = false;
+    this.isRightMouseDown = false;
+
     this.directions = {
       N: (x, y) => [x, y - 1],
       NE: (x, y) => [x + 1, y - 1],
@@ -53,9 +56,15 @@ class Board extends Component {
     this.setup();
   }
 
+
+  componentWillMount() {
+    document.addEventListener('mouseup', this.interceptMouseUp);
+  }
+
+
   componentWillReceiveProps(nextProps) {
     if ((this.props.isGameOver && !this.props.isGameOver)
-      || nextProps.bombs !== this.props.bombs) {
+    || nextProps.bombs !== this.props.bombs) {
       const { height, width, bombs } = nextProps;
       this.board = [];
       this.bombs = bombs;
@@ -65,6 +74,10 @@ class Board extends Component {
       this.width = width;
       this.setup();
     }
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mouseup', this.interceptMouseUp);
   }
 
   /**
@@ -245,6 +258,58 @@ class Board extends Component {
     }));
   }
 
+
+  interceptMouseUp = event => {
+    this.isLeftMouseDown = false;
+    this.isRightMouseDown = false;
+    if (!this.props.isGameOver) {
+      this.props.handleChangeEmotion(event, 'smile');
+    }
+  }
+
+  isAdjacentFlagsEqual = (x, y, bombsNearby) => this.walkAround(x, y)
+    .filter(t => t.isFlagged)
+    .length === bombsNearby
+
+  handleLeftPress = (x, y, bombsNearby, event) => {
+    if (event.button === 2) return;
+    this.isLeftMouseDown = true;
+    if (this.isRightMouseDown) {
+      this.maybeDefuseAround(x, y, bombsNearby);
+      this.isRightMouseDown = false;
+      this.isLeftMouseDown = false;
+    }
+  }
+
+  handleRightPress = (x, y, bombsNearby, event) => {
+    if (event.button === 1) return;
+    event.preventDefault();
+    this.isRightMouseDown = true;
+    if (this.isLeftMouseDown) {
+      this.maybeDefuseAround(x, y, bombsNearby);
+      this.isLeftMouseDown = false;
+      this.isRightMouseDown = false;
+    }
+  }
+
+  maybeDefuseAround = (x, y, bombsNearby) => {
+    if (this.isAdjacentFlagsEqual(x, y, bombsNearby)) {
+      this.walkAround(Number(x), Number(y)).forEach(t => {
+        if (t.isBomb && !t.isFlagged) {
+          this.revealBombs();
+          this.props.finishGame(false);
+        }
+        if (!t.isDefused && !t.isBomb) {
+          this.defusedCount++;
+          /* eslint-disable no-param-reassign */
+          t.isDefused = true;
+          /* eslint-enable no-param-reassign */
+        }
+      });
+    }
+  }
+
+
   handleLeftClick = (x, y) => event => {
     const {
       isGameStarted,
@@ -333,6 +398,8 @@ class Board extends Component {
           <div className={css.row} key={k++}>
             {row.map(tile => (
               <Tile
+                handleLeftPress={this.handleLeftPress}
+                handleRightPress={this.handleRightPress}
                 handleChangeEmotion={handleChangeEmotion}
                 handleLeftClick={this.handleLeftClick}
                 handleRightClick={this.handleRightClick}
@@ -341,9 +408,9 @@ class Board extends Component {
                 key={k + j++}
                 {...tile}
               />
-              ))}
+            ))}
           </div>
-          ))}
+        ))}
       </section>
     );
   }

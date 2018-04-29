@@ -28,20 +28,6 @@ class Game extends Component {
     };
   }
 
-  componentWillMount() {
-    document.addEventListener('mouseup', this.interceptMouseUp);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('mouseup', this.interceptMouseUp);
-  }
-
-  interceptMouseUp = () => {
-    if (!this.state.isGameOver) {
-      this.setState({ emotion: constants.SMILE });
-    }
-  }
-
   toggleSettings = () => {
     this.setState({ isSettingsOpen: !this.state.isSettingsOpen });
   }

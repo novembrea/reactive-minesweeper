@@ -13,6 +13,8 @@ const Tile = ({
   handleChangeEmotion,
   handleLeftClick,
   handleRightClick,
+  handleLeftPress,
+  handleRightPress,
   isBomb,
   isDebugging,
   isDefused,
@@ -82,11 +84,15 @@ const Tile = ({
       disabled={isGameOver}
       className={btnClasses}
       onMouseDown={event => {
-        if (isDefused || isFlagged || isDebugging) return;
-        handleChangeEmotion(event, constants.WORRY);
+        if (isFlagged || isDebugging) return false;
+        if (isDefused) return handleLeftPress(x, y, bombsNearby, event);
+        return handleChangeEmotion(event, constants.WORRY);
       }}
       onClick={handleLeftClick(x, y)}
-      onContextMenu={handleRightClick(x, y)}
+      onContextMenu={event => {
+        if (isDefused) return handleRightPress(x, y, bombsNearby, event);
+        return handleRightClick(x, y)(event);
+      }}
     >
       {content()}
     </button>
@@ -98,6 +104,8 @@ Tile.propTypes = {
   handleChangeEmotion: PropTypes.func.isRequired,
   handleLeftClick: PropTypes.func.isRequired,
   handleRightClick: PropTypes.func.isRequired,
+  handleLeftPress: PropTypes.func.isRequired,
+  handleRightPress: PropTypes.func.isRequired,
   isBomb: PropTypes.bool.isRequired,
   isDebugging: PropTypes.bool.isRequired,
   isDefused: PropTypes.bool.isRequired,
