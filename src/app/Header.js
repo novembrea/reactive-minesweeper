@@ -10,7 +10,6 @@ import css from './Header.scss';
 
 import * as constants from './constants';
 
-
 /**
  * Renders bombsLeft counter, timer and emoji.
  *
@@ -39,7 +38,6 @@ class Header extends Component {
   componentWillUnmount() {
     clearInterval(this.timer);
   }
-
 
   stop() {
     clearInterval(this.timer);

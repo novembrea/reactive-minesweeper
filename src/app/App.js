@@ -1,11 +1,10 @@
 import React, { Fragment } from 'react';
 import Helmet from 'react-helmet';
-
 /* eslint-disable import/no-extraneous-dependencies */
 import { hot } from 'react-hot-loader';
 
-import Game from './Game';
 
+import Game from './Game';
 
 const App = () => (
   <Fragment>

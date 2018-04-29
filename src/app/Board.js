@@ -38,7 +38,6 @@ class Board extends Component {
     this.defusedCount = 0;
     this.height = height;
     this.width = width;
-
     this.isLeftMouseDown = false;
     this.isRightMouseDown = false;
 
@@ -56,15 +55,13 @@ class Board extends Component {
     this.setup();
   }
 
-
   componentWillMount() {
     document.addEventListener('mouseup', this.interceptMouseUp);
   }
 
-
   componentWillReceiveProps(nextProps) {
     if ((this.props.isGameOver && !this.props.isGameOver)
-    || nextProps.bombs !== this.props.bombs) {
+      || nextProps.bombs !== this.props.bombs) {
       const { height, width, bombs } = nextProps;
       this.board = [];
       this.bombs = bombs;
@@ -149,7 +146,6 @@ class Board extends Component {
     }, [[]]);
   }
 
-
   /**
    * Assigns numeric markers to a bomb surrounding tiles.
    */
@@ -200,7 +196,6 @@ class Board extends Component {
 
     return surroundingTiles;
   }
-
 
   /**
    * If the clicked tile is clear, i.e. not a bomb and has no nearby bombs,
@@ -258,7 +253,10 @@ class Board extends Component {
     }));
   }
 
-
+  /**
+   * Global mouseUp interceptor, restores mouse down states
+   * and sets default emotion state back from worry face.
+   */
   interceptMouseUp = event => {
     this.isLeftMouseDown = false;
     this.isRightMouseDown = false;
@@ -267,35 +265,60 @@ class Board extends Component {
     }
   }
 
+  /**
+   * Checks if a tile where left+right mouse clicked
+   * has correct amout of adjacent flagged tiles.
+   * I.e. tile with marker 3 has to have 3 adjacent flags.
+   */
   isAdjacentFlagsEqual = (x, y, bombsNearby) => this.walkAround(x, y)
     .filter(t => t.isFlagged)
     .length === bombsNearby
 
+  /**
+   * Part of a feature where user flags bombs around a defused marked
+   * tile and issues left+right mouse click on this tile.
+   * If adjacent flagged tiles === mark on a clicked tile,
+   * open up all adjacent tiles and if any of those are clear ones —
+   * being standard recursive defusing. If user marked wrong then kaboom.
+   * @see https://images.pcworld.com/images/article/2011/08/minesweeper2-5210135.png
+   * TODO: screenshot features automatic flagging in situaion where bomb location is obvious,
+   * it would be interesting to implement it.
+   *
+   * left and right press handlers work a simple state machine to
+   * capture the clicks themselves and call @method maybeDefuseAdjacent
+   * Clicks state is cleared by @method interceptMouseUp.
+   */
   handleLeftPress = (x, y, bombsNearby, event) => {
     if (event.button === 2) return;
     this.isLeftMouseDown = true;
     if (this.isRightMouseDown) {
-      this.maybeDefuseAround(x, y, bombsNearby);
-      this.isRightMouseDown = false;
-      this.isLeftMouseDown = false;
+      this.maybeDefuseAdjacent(x, y, bombsNearby);
     }
   }
 
+  /**
+   * @see handleLeftPress
+   */
   handleRightPress = (x, y, bombsNearby, event) => {
     if (event.button === 1) return;
     event.preventDefault();
     this.isRightMouseDown = true;
     if (this.isLeftMouseDown) {
-      this.maybeDefuseAround(x, y, bombsNearby);
-      this.isLeftMouseDown = false;
-      this.isRightMouseDown = false;
+      this.maybeDefuseAdjacent(x, y, bombsNearby);
     }
   }
 
-  maybeDefuseAround = (x, y, bombsNearby) => {
+  /**
+   * When left+right mouse clicked on a defused marked tile.
+   * @see handleLeftPress
+   */
+  maybeDefuseAdjacent = (x, y, bombsNearby) => {
     if (this.isAdjacentFlagsEqual(x, y, bombsNearby)) {
       this.walkAround(Number(x), Number(y)).forEach(t => {
         if (t.isBomb && !t.isFlagged) {
+          /* eslint-disable no-param-reassign */
+          t.isLastClick = true;
+          /* eslint-enable no-param-reassign */
           this.revealBombs();
           this.props.finishGame(false);
         }
@@ -303,12 +326,12 @@ class Board extends Component {
           this.defusedCount++;
           /* eslint-disable no-param-reassign */
           t.isDefused = true;
+          this.defuseSurroundingTiles(t.x, t.y);
           /* eslint-enable no-param-reassign */
         }
       });
     }
   }
-
 
   handleLeftClick = (x, y) => event => {
     const {

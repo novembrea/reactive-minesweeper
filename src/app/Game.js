@@ -51,7 +51,6 @@ class Game extends Component {
     });
   }
 
-
   /**
    * Ends the game, preventing interaction with tiles.
    * Halts the timer in Header component.
