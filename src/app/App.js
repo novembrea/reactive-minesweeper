@@ -6,6 +6,7 @@ import { hot } from 'react-hot-loader';
 
 import Game from './Game';
 
+
 const App = () => (
   <Fragment>
     <Helmet>

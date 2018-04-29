@@ -82,9 +82,9 @@ class Game extends Component {
    * Restarts the game from isGameOver state.
    * If the game is running when the restart is requested
    * set the state to defaults and increment the <key>
-   * in to invalidate entire component tree.
+   * to invalidate entire component tree.
    *
-   * @param {string} newDifficulty if the game was restarted from Settings.
+   * @param {string} newDifficulty if the game was restarted from Settings
    */
   restartGame = newDifficulty => {
     let { difficulty } = this.state;

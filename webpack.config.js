@@ -61,7 +61,7 @@ module.exports = {
     }),
     new CleanWebpackPlugin(['dist']),
     new OptimizeCssAssetsPlugin({
-      assetNameRegExp: /\.optimize\.css$/g,
+      assetNameRegExp: /\.optimize\.scss$/g,
       cssProcessor: nano,
       cssProcessorOptions: { discardComments: { removeAll: true } },
       canPrint: true,
