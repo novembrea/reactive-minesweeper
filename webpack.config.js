@@ -57,7 +57,7 @@ module.exports = {
       filename: 'index.html',
     }),
     new MiniCssExtractPlugin({
-      filename: 'assets/[name].css',
+      filename: process.env.NODE_ENV === 'production' ? 'assets/[name]-[hash].css' : 'assets/[name].css',
     }),
     new CleanWebpackPlugin(['dist']),
     new OptimizeCssAssetsPlugin({
