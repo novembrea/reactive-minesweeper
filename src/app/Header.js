@@ -82,7 +82,7 @@ class Header extends Component {
         <div className={css.counter}>
           {bombsLeft < 0 ? 0 : bombsLeft}
         </div>
-        <button className={css.btn} onClick={restartGame}>
+        <button className={css.btn} onClick={() => restartGame()}>
           <img
             className={css.emoji}
             src={emoji}

@@ -74,7 +74,7 @@ class Game extends Component {
   restartGame = newDifficulty => {
     let { difficulty } = this.state;
     if (newDifficulty) difficulty = newDifficulty;
-    return this.setState({
+    this.setState({
       ...constants[difficulty],
       emotion: constants.SMILE,
       isGameOver: false,

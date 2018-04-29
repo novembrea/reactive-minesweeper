@@ -244,10 +244,15 @@ class Board extends Component {
   /**
    * When the game is over reveal location of all bombs.
    */
-  revealBombs() {
+  revealBombs = (isWin = false) => {
     this.board = this.board.map(row => row.map(tile => {
       if (tile.isBomb) {
-        tile.isDefused = true; // eslint-disable-line no-param-reassign
+        /* eslint-disable no-param-reassign */
+        tile.isDefused = true;
+
+        // Per players feedback, if it's a victory cross all bombs.
+        if (isWin) tile.isFlagged = true;
+        /* eslint-enalbe no-param-reassign */
       }
       return tile;
     }));
@@ -326,8 +331,10 @@ class Board extends Component {
           this.defusedCount++;
           /* eslint-disable no-param-reassign */
           t.isDefused = true;
-          this.defuseSurroundingTiles(t.x, t.y);
           /* eslint-enable no-param-reassign */
+          if (t.bombsNearby === 0) {
+            this.defuseSurroundingTiles(t.x, t.y);
+          }
         }
       });
     }
@@ -366,7 +373,7 @@ class Board extends Component {
 
     // Game ends with a win.
     if (this.defusedCount === (this.height * this.width) - this.bombs) {
-      this.revealBombs();
+      this.revealBombs(true);
       return finishGame(true);
     }
 
